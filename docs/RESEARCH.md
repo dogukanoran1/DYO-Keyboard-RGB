@@ -45,3 +45,38 @@ Kullanıcının 0.1 raporunda analiz kesilmeden bitmiş, GATT servis keşfi baş
 FFE0/FFB3/FFB4 kombinasyonu için bu klavye ve firmware ile eşleştirilebilen güvenilir LED komut protokolü bulunamadı. Başka aygıtlarda aynı kısa UUID'ler farklı amaçlarla kullanılabilir; bunlardan komut ödünç alınmaz. 0.2 sürümü salt okunur kimlik ve HID tanımı toplar. Sonuç hâlâ UNKNOWN_NOT_VERIFIED.
 
 Ek birincil kaynak: https://www.bluetooth.com/wp-content/uploads/Files/Specification/HTML/Assigned_Numbers/out/en/index-en.html
+
+## İkinci cihaz raporu — 0.2.0
+
+Standart Device Information okumaları SUCCESS ile dönmüştür:
+
+| Alan | Doğrudan cihazdan okunan değer |
+|---|---|
+| Manufacturer Name | Hailuck |
+| Software Revision | HL_NEW_129S_US_UK_01 |
+| PnP Vendor ID Source | 2 — USB-IF |
+| PnP VID / PID | 0x1915 / 0x0040 |
+| PnP Product Version | 0x0005 |
+
+Üretici metni firmware'in kendi beyanıdır. USB VID tek başına gerçek denetleyici veya ticari model tespiti değildir; firmware içindeki 129S metniyle başka bir perakende ürünün aynı donanım olduğu varsayılmaz. Software Revision, Firmware Revision karakteristiği yerine geçmez.
+
+İlk HID Report Reference okuması BLUETOOTH_PRIVILEGED eksikliğiyle ACCESS_DENIED dönmüştür. Sonraki üç Report Reference ve Report Map NOT_STARTED'dır: bu kayıtlar ayrı ayrı erişim reddi veya donanım desteği yokluğu olarak yorumlanmaz. HID rapor baytları elde edilmemiştir. Erişim engeli normal Yakındaki cihazlar izni reddi değildir.
+
+Android'in resmi izin belgesi BLUETOOTH_PRIVILEGED iznini üçüncü taraf uygulamalar için tanımlamaz. AOSP GattService korunan HID UUID/handle erişiminde bu izni kontrol eder. Bildirime izin veren UUID bulmak, bu kontrolü aşma yetkisi sağlamaz. Uygulamaya yalnızca bu izin adını eklemek çözüm değildir.
+
+Hailuck üretici adı, tam yazılım kimliği ve FFE0/FFB3/FFB4 kombinasyonuyla arama yapıldı. Hailuck'un incelenen resmi Download ve FAQ sayfalarında bu yazılım için eşleştirilebilen LED komut belgesi bulunmadı. Bulunan fwupd Hailuck eklentisi başka USB cihazlar için firmware güncellemesidir (örnek VID/PID 0603:1020); bu BLE klavyenin RGB kontrol protokolü sayılmaz ve kullanılmaz.
+
+### Mevcut karar ve sonraki koşul
+
+Kimlik ve erişim sınırları hakkında teknik kanıt elde edildi. LED kontrolü ve gerçek Rainbow Wave hâlâ UNKNOWN_NOT_VERIFIED. FFE0/FFB3/FFB4 işlevi bilinmiyor; aydınlatma, firmware güncelleme veya başka amaç olduğu iddia edilmiyor. Bu kanalda yazma erişimi de denenmedi.
+
+Aynı servis taramasını tekrarlatmak yeni protokol kanıtı sağlamayacak. Gerçek LED komutu için Hailuck/tedarikçiden bu yazılıma uyan kontrol protokolü veya aynı cihaz üzerinde güvenilir şekilde doğrulanmış bir sürücü gerekiyor. Bağımsız LED bölgeleri veya native wave komutu ayrıca doğrulanmalı. Şu aşamada imkânsızlık ya da başarı kararı verilemez.
+
+Kaynaklar:
+- https://developer.android.com/reference/android/Manifest.permission#BLUETOOTH_PRIVILEGED
+- https://android.googlesource.com/platform/packages/modules/Bluetooth/+/refs/heads/master/android/app/src/com/android/bluetooth/gatt/GattService.java
+- https://www.hailuck.com/download/
+- https://www.hailuck.com/faq/
+- https://chromium.googlesource.com/chromiumos/third_party/fwupd/+/refs/heads/factory-brya-14517.B/plugins/hailuck/README.md
+
+Ham rapor, cihaz MAC adresi ve uygulama UID'si depoya eklenmemiştir.
