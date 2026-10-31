@@ -1,0 +1,8 @@
+*.iml
+.gradle/
+local.properties
+**/build/
+.platform/caches/
+.platform/local/
+*.jks
+*.keystore

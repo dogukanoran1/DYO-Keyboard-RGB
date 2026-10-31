@@ -1,0 +1,1 @@
+{"version":1,"projects":[{"id":"dyo-keyboard-rgb","name":"DYO Keyboard RGB","root":"","buildSystem":"native","settings":{},"modules":[{"id":"app","name":"app","dir":"app"}],"libraries":[]}]}

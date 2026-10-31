@@ -1,0 +1,22 @@
+version = 2
+[module]
+type = "android-app"
+name = "app"
+languageLevel = "JAVA_17"
+output = "build/classes"
+[sourceSets.main]
+scope = "IMPLEMENTATION"
+java = ["src/main/java"]
+res = ["src/main/res"]
+[dependencies]
+implementation = ["kotlin-stdlib", "androidx.activity:activity-compose:1.9.3", "androidx.compose.material3:material3:1.2.1", "androidx.compose.ui:ui:1.6.8", "androidx.compose.foundation:foundation:1.6.8"]
+[android]
+namespace = "com.dogukan.keyboardrgb"
+compileSdk = 35
+minSdk = 31
+targetSdk = 35
+manifest = "src/main/AndroidManifest.xml"
+versionCode = 1
+versionName = "0.1.0"
+isApplication = true
+buildTypes = [{ name = "debug", debuggable = true, minifyEnabled = false, shrinkResources = false }, { name = "release", debuggable = false, minifyEnabled = false, shrinkResources = false }]
