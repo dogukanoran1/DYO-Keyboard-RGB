@@ -40,6 +40,7 @@ class KeyboardHardwareAnalyzer(private val context: Context, private val devices
     }
     fun analyze(device: BluetoothDevice, onChange: (String, Boolean) -> Unit) {
         cancel(); val token = generation; notify = onChange; published = false; active = true
+        report = AnalysisReport("Kimlik okunuyor", device.address, "Henüz okunmadı")
         try {
             report = AnalysisReport(device.name ?: "Adsız cihaz", device.address, devices.transport(device))
                 .put("analysisRunning", true).put("interrupted", false)

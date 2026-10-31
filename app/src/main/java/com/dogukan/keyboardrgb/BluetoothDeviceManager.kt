@@ -20,7 +20,7 @@ class BluetoothDeviceManager(context: Context) {
         else -> "Bilinmiyor"
     }
     fun inputEvidence(): JSONArray = JSONArray().apply {
-        InputDevice.getDeviceIds().mapNotNull { InputDevice.getDevice(it) }.filter { !it.isVirtual && it.isExternal }.forEach { input ->
+        InputDevice.getDeviceIds().asSequence().mapNotNull { InputDevice.getDevice(it) }.filter { !it.isVirtual && it.isExternal }.forEach { input ->
             put(JSONObject().put("name", input.name).put("deviceId", input.id)
                 .put("vendorId", if(input.vendorId == 0) JSONObject.NULL else input.vendorId)
                 .put("productId", if(input.productId == 0) JSONObject.NULL else input.productId)

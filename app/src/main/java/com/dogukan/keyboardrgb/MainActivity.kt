@@ -9,6 +9,8 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     BoxWithConstraints(Modifier.fillMaxSize().systemBarsPadding()) {
                         val wide = maxWidth >= 840.dp
                         if(wide) Row(Modifier.fillMaxSize().padding(24.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                            Column(Modifier.width(340.dp)) { Controls() }
+                            Column(Modifier.width(340.dp).fillMaxHeight().verticalScroll(rememberScrollState())) { Controls() }
                             Report(Modifier.weight(1f))
                         } else LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             item { Controls() }
@@ -95,7 +97,7 @@ class MainActivity : ComponentActivity() {
                 OutlinedButton(enabled = !busy, onClick = {
                     if(allowed()) refresh() else permissions.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN))
                 }) { Text("İzin / Yenile") }
-                TextButton(onClick = { startActivity(Intent(Settings.BLUETOOTH_SETTINGS)) }) { Text("Bluetooth") }
+                TextButton(onClick = { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }) { Text("Bluetooth") }
             }
             devices.forEach { device ->
                 @Suppress("MissingPermission")
