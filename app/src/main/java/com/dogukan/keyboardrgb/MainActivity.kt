@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 class MainActivity : ComponentActivity() {
     private lateinit var manager: BluetoothDeviceManager
     private lateinit var analyzer: KeyboardHardwareAnalyzer
+    private lateinit var observer: LightingObserver
+    private var observing by mutableStateOf(false)
     private val prefs by lazy { getSharedPreferences("analysis", MODE_PRIVATE) }
     private var devices by mutableStateOf(emptyList<BluetoothDevice>())
     private var selected by mutableStateOf<String?>(null)
@@ -41,7 +43,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        manager = BluetoothDeviceManager(this); analyzer = KeyboardHardwareAnalyzer(this, manager)
+        manager = BluetoothDeviceManager(this); analyzer = KeyboardHardwareAnalyzer(this, manager); observer = LightingObserver(this)
         selected = prefs.getString("selected", null); report = prefs.getString("report", "") ?: ""
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = Color.Black, surface = Color(0xFF111111), primary = Color(0xFF9FCFFF))) {
@@ -85,6 +87,17 @@ class MainActivity : ComponentActivity() {
             if(!running) { prefs.edit().putString("report", json).apply(); status = "Analiz sona erdi. LED kontrolü henüz doğrulanmadı." }
         }
     }
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun observe() {
+        if (!allowed()) { refresh(); return }
+        val device = devices.find { it.address == selected } ?: return
+        busy = true; observing = true
+        observer.start(device) { json, running ->
+            report = json; busy = running
+            if (!running) { observing = false; prefs.edit().putString("report", json).apply(); status = "Gözlem sona erdi. Raporu kaydedip gönder." }
+            else status = try { org.json.JSONObject(json).optString("status") } catch (_: Exception) { "Gözlem sürüyor" }
+        }
+    }
     @Composable
     private fun Controls() {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -113,12 +126,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
             Button(modifier = Modifier.fillMaxWidth(), enabled = !busy && devices.any { it.address == selected }, onClick = { analyze() }) { Text("Donanımı incele") }
+            OutlinedButton(modifier = Modifier.fillMaxWidth(), enabled = !busy && devices.any { it.address == selected }, onClick = { observe() }) { Text("Işık tuşlarını gözle") }
+            Text("Gözlem başlayınca 45 saniye içinde klavyenin ışık renk ve parlaklık tuşlarına bas. Normal yazı yazma. Bildirim gelmeyebilir.", style = MaterialTheme.typography.bodySmall)
             if(busy) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
-                TextButton(onClick = { analyzer.cancel(); busy = false; status = "Analiz durduruldu; rapor kısmi olabilir." }) { Text("Analizi durdur") }
+                TextButton(onClick = { if(observing) observer.cancel() else analyzer.cancel(); busy = false; status = "İşlem durduruldu; rapor kısmi olabilir." }) { Text("Analizi durdur") }
             }
             OutlinedButton(enabled = report.isNotEmpty() && !busy, onClick = { export.launch("DYO-Keyboard-Analiz.json") }) { Text("Teknik raporu kaydet") }
-            Text("Rapor seçili adresi, ayrı InputDevice gözlemlerini ve zaman damgasını içerir. İnternet kullanılmaz. Klavyeye LED komutu gönderilmez.", style = MaterialTheme.typography.bodySmall)
+            Text("Rapor seçili adresi, ayrı InputDevice gözlemlerini ve zaman damgasını içerir. İnternet kullanılmaz. Işık gözleminde standart Bluetooth bildirim aboneliği kurulur; LED komutu gönderilmez.", style = MaterialTheme.typography.bodySmall)
         }
     }
     @Composable private fun Report(modifier: Modifier) {
@@ -132,8 +147,8 @@ class MainActivity : ComponentActivity() {
         }
     }
     override fun onStop() {
-        if(::analyzer.isInitialized && busy) { analyzer.cancel(); busy = false; status = "Uygulama arka plana geçti; analiz durduruldu. Rapor kısmi olabilir." }
+        if(::analyzer.isInitialized && busy) { if(observing) observer.cancel() else analyzer.cancel(); busy = false; status = "Uygulama arka plana geçti; analiz durduruldu. Rapor kısmi olabilir." }
         super.onStop()
     }
-    override fun onDestroy() { if(::analyzer.isInitialized) analyzer.cancel(); super.onDestroy() }
+    override fun onDestroy() { if(::analyzer.isInitialized) analyzer.cancel(); if(::observer.isInitialized) observer.cancel(); super.onDestroy() }
 }
