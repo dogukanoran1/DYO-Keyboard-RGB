@@ -6,7 +6,7 @@
 - 3 birim testi başarılı: PnP ID alanlarında little-endian/unsigned çözümleme ve ad alanının korunması; eksik/fazla uzun PnP değerinin reddi; ham HEX değerinde sıfır/yüksek bitlerin korunması.
 - Lint hata yok. İlk sürümden kalan uyarılar: uygulamaya özel ikon yok; Android 12+ dataExtractionRules ayrıca tanımlanmamış. Kotlin eski callback override uyarıları, Android 12 uyumluluğu için tutulan callback'lerden geliyor.
 - Kod yalnızca standart kimlik ve HID tanım meta verisini okur. FFB3 yazımı, FFB4 aboneliği, HID giriş raporu okuması ve CCCD yazımı yoktur.
-- Android 16 tablette 0.2 okumaları henüz test edilmedi; erişim reddi/zaman aşımı da geçerli teknik sonuç olarak raporlanır.
+- Kullanıcının Android 16 tablette ürettiği ikinci raporda üretici, Software Revision ve PnP ID okumaları SUCCESS. İlk HID descriptor okuması BLUETOOTH_PRIVILEGED eksikliğiyle ACCESS_DENIED; kalan HID okumaları NOT_STARTED. Analiz kesilmedi, writesSent 0. HID tanımı ve gerçek LED kontrolü elde edilmedi.
 - CodeAssist için yerel model ve module.toml sağlandı; bu sürümün belirli tablet IDE motorunda derlenmesi burada doğrulanmadı.
 
 ## 0.1.0
