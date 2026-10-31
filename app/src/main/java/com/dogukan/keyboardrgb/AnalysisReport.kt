@@ -8,7 +8,7 @@ import java.util.Locale
 import java.util.TimeZone
 
 class AnalysisReport(val deviceName: String, val address: String, val transport: String) {
-    private val root = JSONObject().put("schemaVersion", 1).put("appVersion", "0.1.0")
+    private val root = JSONObject().put("schemaVersion", 2).put("appVersion", "0.2.0")
         .put("timestampUtc", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date()))
         .put("deviceName", deviceName).put("address", address).put("reportedTransport", transport)
         .put("lightingVerdict", "UNKNOWN_NOT_VERIFIED").put("lightingEvidence", UnverifiedProtocol.evidence)

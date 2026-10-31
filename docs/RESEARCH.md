@@ -27,3 +27,21 @@ Tablette üretilecek JSON raporunda cihaz adı, Android taşıma türü, SDP UUI
 - https://developer.android.com/develop/connectivity/bluetooth/ble/transfer-ble-data
 - https://github.com/tyron12233/CodeAssist/blob/main/docs/build-system.md
 - https://github.com/tyron12233/CodeAssist/blob/main/docs/github-action.md
+
+## İlk cihaz raporunun değerlendirmesi
+
+Kullanıcının 0.1 raporunda analiz kesilmeden bitmiş, GATT servis keşfi başarılı ve yazma sayısı sıfırdır. Ham rapor ve cihaz adresi depoya dahil edilmemiştir.
+
+| Gözlem | Yorum |
+|---|---|
+| Android türü BLE, HID servisi 1812 | BLE ve HID servis keşfi çalışıyor |
+| 180A / 2A29, 2A28, 2A50 okunabilir | Üretici adı, yazılım sürümü, PnP ID için standart meta veri okuması denenebilir |
+| HID 2A4B okunabilir, 2A4D üzerinde 2908 descriptor'ları var | Report Map ve Report Reference meta verisi incelenebilir; Android erişimi yine engelleyebilir |
+| FFE0 / FFB3 write + write-without-response | Bir yazma kanalı listelenmiş; işlevi ve uygulamadan yazma erişimi doğrulanmadı |
+| FFE0 / FFB4 notify | Bildirim özelliği listelenmiş; hangi veriyi taşıdığı bilinmiyor; abone olunmuyor |
+| Ayrı Wireless Keyboard InputDevice VID 0x1915 / PID 0x0040 | Bluetooth adresiyle kesin eşleştirme ve üretici/denetleyici kimliği çıkarılamaz |
+| Sistemin sunduğu ışık listesi boş | Android ışık listesinde kontrol bulunmadı; bu bulgu donanımın RGB yeteneğini dışlamaz |
+
+FFE0/FFB3/FFB4 kombinasyonu için bu klavye ve firmware ile eşleştirilebilen güvenilir LED komut protokolü bulunamadı. Başka aygıtlarda aynı kısa UUID'ler farklı amaçlarla kullanılabilir; bunlardan komut ödünç alınmaz. 0.2 sürümü salt okunur kimlik ve HID tanımı toplar. Sonuç hâlâ UNKNOWN_NOT_VERIFIED.
+
+Ek birincil kaynak: https://www.bluetooth.com/wp-content/uploads/Files/Specification/HTML/Assigned_Numbers/out/en/index-en.html

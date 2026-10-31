@@ -14,6 +14,7 @@ import org.json.JSONObject
 class KeyboardHardwareAnalyzer(private val context: Context, private val devices: BluetoothDeviceManager) {
     private val main = Handler(Looper.getMainLooper())
     private var gatt: BluetoothGatt? = null
+    private var metadata: GattMetadataReader? = null
     private var receiver: BroadcastReceiver? = null
     private var generation = 0
     private var report: AnalysisReport? = null
@@ -26,11 +27,12 @@ class KeyboardHardwareAnalyzer(private val context: Context, private val devices
     private fun fail(message: String) { report?.put("error", message); finish() }
     private fun finish() {
         active = false
+        metadata?.stop(); metadata = null
         report?.put("analysisRunning", false)
         main.removeCallbacksAndMessages(null)
         receiver?.let { try { context.unregisterReceiver(it) } catch (_: IllegalArgumentException) {} }; receiver = null
         val old = gatt; gatt = null
-        try { old?.disconnect() } catch (_: Exception) {} finally { old?.close() }
+        try { old?.disconnect() } catch (_: Exception) {} finally { try { old?.close() } catch (_: Exception) {} }
         emit(false)
     }
     fun cancel() {
@@ -102,6 +104,22 @@ class KeyboardHardwareAnalyzer(private val context: Context, private val devices
                         } else if(state == BluetoothProfile.STATE_DISCONNECTED) { report?.put("gattStatus", "GATT bağlantısı kesildi; servis keşfi tamamlanmadı"); finish() }
                     }
                 }
+                override fun onCharacteristicRead(remote: BluetoothGatt, ch: BluetoothGattCharacteristic, value: ByteArray, status: Int) {
+                    val copy = value.copyOf()
+                    main.post { if(token == generation && gatt === remote) metadata?.characteristicRead(ch, copy, status) }
+                }
+                @Suppress("DEPRECATION")
+                override fun onCharacteristicRead(remote: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int) {
+                    if(android.os.Build.VERSION.SDK_INT < 33) onCharacteristicRead(remote, ch, ch.value?.copyOf() ?: byteArrayOf(), status)
+                }
+                override fun onDescriptorRead(remote: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int, value: ByteArray) {
+                    val copy = value.copyOf()
+                    main.post { if(token == generation && gatt === remote) metadata?.descriptorRead(descriptor, copy, status) }
+                }
+                @Suppress("DEPRECATION")
+                override fun onDescriptorRead(remote: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+                    if(android.os.Build.VERSION.SDK_INT < 33) onDescriptorRead(remote, descriptor, status, descriptor.value?.copyOf() ?: byteArrayOf())
+                }
                 override fun onServicesDiscovered(remote: BluetoothGatt, status: Int) {
                     main.post {
                         if(token != generation || gatt !== remote) return@post
@@ -110,13 +128,20 @@ class KeyboardHardwareAnalyzer(private val context: Context, private val devices
                             if(status == BluetoothGatt.GATT_SUCCESS) report?.put("gattServices", JSONArray(remote.services.map { service ->
                                 JSONObject().put("uuid", service.uuid.toString()).put("instanceId", service.instanceId)
                                     .put("characteristics", JSONArray(service.characteristics.map { ch ->
-                                        JSONObject().put("uuid", ch.uuid.toString()).put("properties", ch.properties)
+                                        JSONObject().put("uuid", ch.uuid.toString()).put("instanceId", ch.instanceId).put("properties", ch.properties)
                                             .put("readable", ch.properties and BluetoothGattCharacteristic.PROPERTY_READ != 0)
                                             .put("writable", ch.properties and (BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0)
                                             .put("descriptors", JSONArray(ch.descriptors.map { it.uuid.toString() }))
                                     }))
                             }))
-                            finish()
+                            if(status == BluetoothGatt.GATT_SUCCESS) {
+                                bleTimeout?.let { main.removeCallbacks(it) }
+                                report?.put("metadataStatus", "Kimlik ve HID tanımı salt okunur inceleniyor")
+                                metadata = GattMetadataReader(remote, main,
+                                    onChange = { values -> report?.put("metadataReads", values); emit(true) },
+                                    onDone = { reason -> report?.put("metadataStatus", reason); finish() })
+                                metadata?.start()
+                            } else finish()
                         } catch(e: Exception) { fail("GATT sonuçları: ${e.message}") }
                     }
                 }

@@ -11,7 +11,7 @@ Kotlin / Jetpack Compose Android uygulaması. Samsung Galaxy Tab S11 Ultra ve 15
 3. Bağımlılıkları ilk derlemede indir; debug APK oluştur ve yükle. İlk bağımlılık indirmesi internet ister, uygulamanın normal kullanımı istemez. Uygulamada INTERNET izni yoktur.
 4. Klavyeyi Android Bluetooth ayarlarında eşleştir ve bağlı tut.
 5. Uygulamada **İzin / Yenile** → klavyeyi seç → **Donanımı incele**.
-6. İşlem en fazla yaklaşık 32 saniye sürer. **Teknik raporu kaydet** ile JSON dosyasını kaydet. Rapor cihaz adresi ve ayrı giriş aygıtı gözlemleri içerir; paylaşmadan önce içeriğini kontrol edebilirsin.
+6. Servis keşfi en fazla yaklaşık 32 saniye; ardından her meta veri okuması en fazla 4 saniye sürer (en fazla 32 okuma). Tek bir okuma zaman aşımına uğrarsa kalan okumalar denenmeden bağlantı kapatılır. **Teknik raporu kaydet** ile JSON dosyasını kaydet. Rapor cihaz adresi ve ayrı giriş aygıtı gözlemleri içerir; paylaşmadan önce içeriğini kontrol edebilirsin.
 7. JSON raporunu inceleme için gönder. Donanım üzerinde renk kontrolüne geçiş bu veriye ve doğrulanmış protokole bağlıdır.
 
 CodeAssist'in belirli tablet sürümünde derleme ve fiziksel klavyede çalışma burada doğrulanamaz. Compose desteği, modül modeli ve ilk bağımlılık çözümlemesi kullanılan IDE sürümüne bağlıdır. Derleme hatasını gizlemek için boş/işlevsiz fallback ekranı yoktur.
@@ -21,6 +21,7 @@ CodeAssist'in belirli tablet sürümünde derleme ve fiziksel klavyede çalışm
 - Eşleştirilmiş cihaz seçimi, son seçimi hatırlama; Bluetooth kapalı/izin yok/boş liste durumları.
 - Ad/adres/tür/sınıf, önbellekteki UUID'ler ve zaman sınırlı Classic SDP sorgusu.
 - BLE/Dual/bilinmeyen tür için zaman sınırlı GATT bağlantısı ve salt meta veri keşfi; servisler, karakteristik özellikleri ve descriptor UUID'leri.
+- v0.2: standart Device Information kimlik alanları, PnP ID, HID Report Map ve Report Reference descriptor değerlerini sırayla okuma; ham HEX, hata veya erişim reddini kaydetme. Canlı HID giriş raporları okunmaz ve bildirim aboneliği açılmaz.
 - Ayrı dış InputDevice listesi, mevcutsa VID/PID ve sistemin sunduğu ışık meta verisi. Bluetooth cihazıyla kesin kimlik eşleştirmesi yapılmaz.
 - ACL bağlantı olayları, hata durumları, belirsizlikler; son raporu yerelde saklama, Android dosya seçicisiyle JSON dışa aktarma.
 - Siyah Compose analiz ekranı; geniş tablette iki sütun, dar ekranda kaydırılabilir tek sütun.
@@ -45,7 +46,11 @@ Karakteristik/descriptor yazma, bildirim aboneliği, raw HID/L2CAP/RFCOMM komutl
 
 ## Derleme
 
-JDK 17, SDK 35, Gradle 8.7. `./gradlew :app:assembleDebug :app:lintDebug`.
+JDK 17, SDK 35, Gradle 8.7. `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug`.
 GitHub Actions aynı kaynakları derler; APK Actions artifacts altında oluşturulur. Bu doğrulama CodeAssist'in kendi derleme motoru veya fiziksel Bluetooth testi yerine geçmez.
 
 Ayrıntılar: [Araştırma ve Android sınırları](docs/RESEARCH.md), [Cihaz test listesi](docs/DEVICE_TEST.md).
+
+## 0.2 güncellemesi
+
+0.1 raporunda BLE keşfi ve FFE0 altında FFB3/FFB4 kanalları gözlendi. Bu kanalların işlevi henüz belirlenmedi. 0.2 aynı Donanımı incele düğmesiyle üretici/yazılım/PnP kimliği ve erişilebilirse HID tanımı toplar. Sadece UUID benzerliğiyle başka cihazların komutları kullanılmaz. Android HID okumasını engellerse erişim reddi raporlanır; engel aşılmaya çalışılmaz.
