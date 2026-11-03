@@ -1,5 +1,14 @@
 # Doğrulama — 31 Ekim 2026
 
+## 0.3.0 — 4 Kasım 2026
+
+- Kod commit'i `66e95de08ad7fd03fb19c75bba2b273cc5fd520f` için GitHub Actions'ta JDK 17 / SDK 35 ile `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug` başarılı.
+- Derleme kaydı: https://github.com/dogukanoran1/DYO-Keyboard-RGB/actions/runs/41736874614
+- 8 yeni test: başarılı okumaların 12 dakikalık son tarihi uzatmaması, okuma ve kurulum zaman aşımları, iptal sonrası geç gelen callback'ler, okuma başlatma/yanıt hataları, çift başlatma ve önceki oturum callback'lerinin yeni oturuma sızmaması. Mevcut 3 meta veri testi de aynı görevde çalıştırıldı.
+- APK üretildi ve Actions artifact olarak yüklendi. Kaynakların CodeAssist'in belirli tablet sürümünde derlenmesi ve fiziksel Bluetooth davranışı burada test edilmedi.
+- Donanım sonucu bilinmiyor: periyodik üretici bilgisi okumasının klavyenin ışık veya uyku zamanlayıcısını etkilediği henüz doğrulanmadı. Yazılım başarılı GATT yanıtlarını fiziksel başarı saymaz; raporda `sleepPrevented` ve `backlightStayedOn` null kalır.
+- Kalıcı uyku ayarı, FFB3 komutu, HID yazımı, firmware güncellemesi veya RGB/bağımsız LED kontrolü eklenmedi.
+
 ## 0.2.0
 
 - JDK 17, Gradle 8.7, Android SDK 35 ile `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug` başarılı.
@@ -16,3 +25,4 @@
 - Bu test gerçek renk kontrolünü, Rainbow Wave'i, tüm hata durumlarını veya batarya davranışını doğrulamaz.
 
 Ham kullanıcı raporu ve cihaz adresi GitHub'a yüklenmemiştir. Nihai hedef gerçek klavye aydınlatma kontrolüdür; henüz tamamlanmadı.
+
