@@ -2,7 +2,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
     namespace = "com.dogukan.keyboardrgb"
     compileSdk = 35
-    defaultConfig { applicationId = "com.dogukan.keyboardrgb"; minSdk = 31; targetSdk = 35; versionCode = 2; versionName = "0.2.0" }
+    defaultConfig { applicationId = "com.dogukan.keyboardrgb"; minSdk = 31; targetSdk = 35; versionCode = 3; versionName = "0.3.0" }
     buildFeatures { compose = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -15,3 +15,4 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.6.8")
     implementation("androidx.compose.foundation:foundation:1.6.8")
 }
+

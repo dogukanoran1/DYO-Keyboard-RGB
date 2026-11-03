@@ -1,5 +1,20 @@
 # Protokol araştırması — 31 Ekim 2026
 
+## 4 Kasım 2026 — Uyku zamanlayıcısı için ölçülebilir deney
+
+156 modeline ait kullanıcı kılavuzu doğrudan incelendi: ışık 30 saniye hareketsizlikte söner, klavye 10 dakikada uyur. Touchpad uyandıramaz; herhangi bir klavye tuşu uyandırabilir. F6 aydınlatma parlaklığı, F7 renk içindir. Süre değişikliği veya bağımsız LED adresleme komutu belirtilmiyor.
+
+0.3.0, standart üretici metnini 15 saniyede bir okuyarak harici BLE trafiğinin klavyenin hareketsizlik sayacını etkileyip etkilemediğini denemek için 12 dakikalık bir mod ekler. Bu bir test hipotezidir; Hailuck firmware'inde işe yaradığına dair kanıt yoktur. BLE bağlantısı, HID işlevi ve ışık zamanlayıcısı birbirinden ayrı davranabilir. Kalıcı süre değişikliği veya LED komutu uygulanmaz; FFB3 ve korunan HID erişimine dokunulmaz. SleepTrial raporları fiziksel sonucu otomatik başarılı saymaz.
+
+Ön plan servisi yalnızca kullanıcı başlattığında çalışır; Bluetooth bağlantı izni, connectedDevice türü ve süreli kısmi uyanıklık kilidi kullanır. Kurulum/okuma zaman aşımları, durdurma, servis kapanışı ve maksimum deney süresi kaynakları serbest bırakır. Protokol belgesi veya aynı cihazda doğrulanmış bir sürücü olmadan gerçek renk/RGB kontrolü henüz uygulanamaz.
+
+Birincil kaynaklar:
+- https://developer.android.com/reference/android/bluetooth/BluetoothGatt
+- https://developer.android.com/develop/background-work/services/fgs/service-types#connected-device
+- https://source.android.com/docs/core/connect/bluetooth/verifying_debugging
+
+## Önceki protokol araştırması
+
 156 Wireless Magic Keyboard adı tek başına üretici, denetleyici veya firmware kimliğini doğrulamıyor. Bu adla yapılan araştırmada cihazla eşleştirilebilen üretici protokolü veya açık kaynak sürücü bulunamadı. Bu, böyle bir protokolün bulunmadığını kanıtlamaz.
 
 Kullanıcının gözlemleri: 7 renk, sabit renk, nefes efekti, parlaklık ve fiziksel tuşlarla kontrol. Bunlar kullanıcı beyanıdır; uygulama tarafından doğrulanmış donanım ölçümü değildir. 7 renk, RGB karışımı veya bağımsız tuş/bölge kontrolünün kanıtı değildir. Firmware'in içinde çalışan efektlerin harici bir kanaldan yönetilebildiği varsayılmaz.
@@ -80,3 +95,4 @@ Kaynaklar:
 - https://chromium.googlesource.com/chromiumos/third_party/fwupd/+/refs/heads/factory-brya-14517.B/plugins/hailuck/README.md
 
 Ham rapor, cihaz MAC adresi ve uygulama UID'si depoya eklenmemiştir.
+

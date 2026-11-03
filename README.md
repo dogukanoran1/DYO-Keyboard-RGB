@@ -1,8 +1,22 @@
 # DYO Keyboard RGB
 
-Kotlin / Jetpack Compose Android uygulaması. Samsung Galaxy Tab S11 Ultra ve 156 Wireless Magic Keyboard için **Aşama 1: Donanım Analizi**.
+Kotlin / Jetpack Compose Android uygulaması. Samsung Galaxy Tab S11 Ultra ve 156 Wireless Magic Keyboard için **donanım analizi ve deneysel uyku geciktirme**.
 
 **Gerçek LED kontrolü ve Rainbow Wave henüz doğrulanmadı, etkin değil. Projenin nihai hedefi tamamlanmış değildir.** Bu sürüm protokolü araştırmak için tabletten teknik kanıt toplar; sahte RGB kontrol ekranı içermez.
+
+## 0.3.0 — Uyku geciktirmeyi dene
+
+Kullanıcının 156 model kılavuzu iki ayrı süre veriyor: ışık için 30 saniye, klavye uykusu için 10 dakika. Herhangi bir klavye tuşu uyandırır; touchpad uyandırmaz. Kılavuzda bu süreleri değiştiren komut belirtilmiyor.
+
+Yeni **Uyku geciktirmeyi dene · 12 dk** düğmesi, BLE iletişiminin klavyenin hareketsizlik zamanlayıcısını etkileyip etkilemediğini sınar. Her 15 saniyede yalnızca standart Device Information / Manufacturer Name (`180A/2A29`) okunur. Bu alan kullanıcının önceki raporunda başarıyla okunmuştu. Süre ayarı değiştirilmez; FFB3, HID veya firmware komutu gönderilmez. Başarılı GATT yanıtları ışığın ya da yazı yazma işlevinin uyanık kaldığını kanıtlamaz.
+
+1. Klavyeyi seç, ışığını aç, **Uyku geciktirmeyi dene · 12 dk** düğmesine bas.
+2. İstenirse bildirim iznini ver; bildirimdeki **Durdur** düğmesiyle deney sonlandırılabilir. İzin reddi deneyi engellemez; uygulamadaki durdurma düğmesi kullanılabilir.
+3. İlk 11 dakika klavyeye/touchpad'e dokunma. 30 saniye sonra ışığın durumunu gözle. Tablet üzerinde başka uygulamaya geçebilirsin.
+4. 11. dakikada, deney hâlâ sürerken bir kez yazmayı dene; ilk tuşun gecikip gecikmediğini veya kaybolup kaybolmadığını not et. Bu tuş sonraki hareketsizlik süresini sıfırlayacağından yalnızca o andaki davranışı değerlendir.
+5. Deney 12. dakikada kendiliğinden biter. **Uyku raporunu göster → Teknik raporu kaydet** ile okuma/bağlantı sonuçlarını kaydet. Işık ve ilk tuş gözlemini ayrıca belirt.
+
+Deney görünür bir `connectedDevice` ön plan servisi ve süre sınırı olan kısmi uyanıklık kilidiyle yürür. En fazla 12 dakikalık ölçüm + 20 saniyelik kurulum süresi vardır. Yanıt 5 saniyede gelmezse veya bağlantı kesilirse durur; otomatik yeniden bağlanmaz. Donanım analizi ve ışık gözlemi aynı anda başlatılamaz. Kalıcı uyku süresi veya RGB kontrolü henüz sunulmuyor. Tabletteki fiziksel etkisi test edilmeden başarı iddia edilmez.
 
 ## Tablette kullanım
 
@@ -29,7 +43,7 @@ CodeAssist'in belirli tablet sürümünde derleme ve fiziksel klavyede çalışm
 
 ## Güvenlik ve yaşam döngüsü
 
-Karakteristik/descriptor yazma, bildirim aboneliği, raw HID/L2CAP/RFCOMM komutları, yeniden eşleştirme veya unpair yoktur. Uygulama yalnızca kendi GATT istemcisini kapatır. Arka plana geçince analiz durur; sınırsız yeniden bağlanma ve arka plan servisi yoktur. BLE servis keşfi cihazı kısa süreli uyandırabilir. Normal klavye işlevlerinin korunması fiziksel tablette ayrıca test edilmelidir.
+Üreticiye özel karakteristik, HID, firmware güncelleme, yeniden eşleştirme veya unpair komutu yoktur. Işık gözlemi yalnızca standart CCCD aboneliği kurar. Donanım analizi ve ışık gözlemi arka plana geçince durur; yeni uyku deneyi süreli ön plan servisiyle devam eder. Uygulama yalnızca kendi GATT istemcisini kapatır ve sınırsız yeniden bağlanmaz. BLE trafiği veya servis keşfi cihazın güç davranışını etkileyebilir. Normal yazı/touchpad işlevlerinin korunması fiziksel tablette ayrıca test edilmelidir.
 
 ## Geliştirme sırası
 
@@ -54,3 +68,4 @@ Ayrıntılar: [Araştırma ve Android sınırları](docs/RESEARCH.md), [Cihaz te
 ## 0.2 güncellemesi
 
 0.1 raporunda BLE keşfi ve FFE0 altında FFB3/FFB4 kanalları gözlendi. Bu kanalların işlevi henüz belirlenmedi. 0.2 aynı Donanımı incele düğmesiyle üretici/yazılım/PnP kimliği ve erişilebilirse HID tanımı toplar. Sadece UUID benzerliğiyle başka cihazların komutları kullanılmaz. Android HID okumasını engellerse erişim reddi raporlanır; engel aşılmaya çalışılmaz.
+

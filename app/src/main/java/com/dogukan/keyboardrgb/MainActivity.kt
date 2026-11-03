@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ class MainActivity : ComponentActivity() {
     private var busy by mutableStateOf(false)
     private var status by mutableStateOf("Yakındaki cihazlar iznini verip eşleştirilmiş klavyeni seç.")
     private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { refresh() }
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { startSleepTrial() }
     private val export = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if(uri != null) try {
             val output = contentResolver.openOutputStream(uri) ?: error("Dosya açılamadı")
@@ -45,6 +47,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         manager = BluetoothDeviceManager(this); analyzer = KeyboardHardwareAnalyzer(this, manager); observer = LightingObserver(this)
         selected = prefs.getString("selected", null); report = prefs.getString("report", "") ?: ""
+        SleepTrialService.restoreReport(this)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = Color.Black, surface = Color(0xFF111111), primary = Color(0xFF9FCFFF))) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
@@ -63,7 +66,7 @@ class MainActivity : ComponentActivity() {
         }
         refresh()
     }
-    override fun onResume() { super.onResume(); if(::manager.isInitialized && !busy) refresh() }
+    override fun onResume() { super.onResume(); if(::manager.isInitialized && !busy && !SleepTrialService.running) refresh() }
     private fun allowed() = checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
         checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
     @android.annotation.SuppressLint("MissingPermission")
@@ -98,8 +101,20 @@ class MainActivity : ComponentActivity() {
             else status = try { org.json.JSONObject(json).optString("status") } catch (_: Exception) { "Gözlem sürüyor" }
         }
     }
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun startSleepTrial() {
+        if (!allowed()) { refresh(); return }
+        if (busy || SleepTrialService.running) return
+        val address = devices.find { it.address == selected }?.address ?: return
+        try {
+            startForegroundService(Intent(this, SleepTrialService::class.java).putExtra(SleepTrialService.EXTRA_ADDRESS, address))
+            status = "Uyku deneyi başlatılıyor. Deney uygulama arka plandayken de sürer."
+        } catch (e: Exception) { status = "Uyku deneyi başlatılamadı: ${e.message}" }
+    }
     @Composable
     private fun Controls() {
+        val sleepRunning = SleepTrialService.running
+        val idle = !busy && !sleepRunning
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("DYO Keyboard RGB", style = MaterialTheme.typography.headlineSmall)
             Text("Donanım Analizi · Aşama 1", color = MaterialTheme.colorScheme.primary)
@@ -107,7 +122,7 @@ class MainActivity : ComponentActivity() {
             Text("Rainbow Wave ve renk kontrolü, donanım protokolü doğrulanana kadar kapalı.")
             Text(status, style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(enabled = !busy, onClick = {
+                OutlinedButton(enabled = idle, onClick = {
                     if(allowed()) refresh() else permissions.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN))
                 }) { Text("İzin / Yenile") }
                 TextButton(onClick = { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }) { Text("Bluetooth") }
@@ -115,7 +130,7 @@ class MainActivity : ComponentActivity() {
             devices.forEach { device ->
                 @Suppress("MissingPermission")
                 val name = try { device.name ?: "Adsız cihaz" } catch(_: SecurityException) { "İzin gerekli" }
-                OutlinedButton(modifier = Modifier.fillMaxWidth(), enabled = !busy, onClick = {
+                OutlinedButton(modifier = Modifier.fillMaxWidth(), enabled = idle, onClick = {
                     selected = device.address; prefs.edit().putString("selected", selected).apply()
                     // Old reports remain explicitly labelled by their own address and timestamp.
                 }) {
@@ -125,14 +140,33 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            Button(modifier = Modifier.fillMaxWidth(), enabled = !busy && devices.any { it.address == selected }, onClick = { analyze() }) { Text("Donanımı incele") }
-            OutlinedButton(modifier = Modifier.fillMaxWidth(), enabled = !busy && devices.any { it.address == selected }, onClick = { observe() }) { Text("Işık tuşlarını gözle") }
+            Button(modifier = Modifier.fillMaxWidth(), enabled = idle && devices.any { it.address == selected }, onClick = { analyze() }) { Text("Donanımı incele") }
+            OutlinedButton(modifier = Modifier.fillMaxWidth(), enabled = idle && devices.any { it.address == selected }, onClick = { observe() }) { Text("Işık tuşlarını gözle") }
             Text("Gözlem başlayınca 45 saniye içinde klavyenin ışık renk ve parlaklık tuşlarına bas. Normal yazı yazma. Bildirim gelmeyebilir.", style = MaterialTheme.typography.bodySmall)
             if(busy) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
                 TextButton(onClick = { if(observing) observer.cancel() else analyzer.cancel(); busy = false; status = "İşlem durduruldu; rapor kısmi olabilir." }) { Text("Analizi durdur") }
             }
-            OutlinedButton(enabled = report.isNotEmpty() && !busy, onClick = { export.launch("DYO-Keyboard-Analiz.json") }) { Text("Teknik raporu kaydet") }
+            HorizontalDivider()
+            Text("Uyku geciktirme deneyi", style = MaterialTheme.typography.titleMedium)
+            Text("12 dakika boyunca 15 saniyede bir klavyeden üretici bilgisi okunur. Bunun 30 saniyelik ışık ve 10 dakikalık uyku süresine etkisi henüz bilinmiyor. Kalıcı ayar değiştirilmez.", style = MaterialTheme.typography.bodySmall)
+            if (sleepRunning) {
+                Text("Deney sürüyor. İlk 11 dakika klavyeye dokunma; ışığın açık kalıp kalmadığını gözle. Sonra bir tuşa basıp uyanma gecikmesini kontrol et.", style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick = { stopService(Intent(this@MainActivity, SleepTrialService::class.java)) }) { Text("Uyku deneyini durdur") }
+            } else Button(modifier = Modifier.fillMaxWidth(), enabled = idle && devices.any { it.address == selected }, onClick = {
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+                    notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                else startSleepTrial()
+            }) { Text("Uyku geciktirmeyi dene · 12 dk") }
+            val sleepReport = SleepTrialService.latestReport
+            if (sleepReport.isNotEmpty()) {
+                Text(try { org.json.JSONObject(sleepReport).optString("status") } catch (_: Exception) { "Uyku raporu hazır" }, style = MaterialTheme.typography.bodySmall)
+                TextButton(enabled = idle, onClick = {
+                    report = sleepReport
+                    prefs.edit().putString("report", report).apply()
+                }) { Text("Uyku raporunu göster") }
+            }
+            OutlinedButton(enabled = report.isNotEmpty() && idle, onClick = { export.launch("DYO-Keyboard-Analiz.json") }) { Text("Teknik raporu kaydet") }
             Text("Rapor seçili adresi, ayrı InputDevice gözlemlerini ve zaman damgasını içerir. İnternet kullanılmaz. Işık gözleminde standart Bluetooth bildirim aboneliği kurulur; LED komutu gönderilmez.", style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -152,3 +186,4 @@ class MainActivity : ComponentActivity() {
     }
     override fun onDestroy() { if(::analyzer.isInitialized) analyzer.cancel(); if(::observer.isInitialized) observer.cancel(); super.onDestroy() }
 }
+

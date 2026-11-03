@@ -2,6 +2,22 @@
 
 Bu liste henüz çalıştırılmadı. Test cihazı: Samsung Galaxy Tab S11 Ultra / Android 16.
 
+## 0.3 uyku deneyi
+
+- Deneyin etkisini fiziksel klavyede doğrulamak gerekiyor. Uygulamasız bir denemeyle 30 saniyelik ışık sönmesi ve 10 dakikalık uykudan sonraki ilk tuş davranışını karşılaştır.
+- Klavyeyi seç, ışığını aç ve uyku deneyini başlat. İlk 11 dakika klavyeye/touchpad'e dokunma. 30 saniye sonra ışığın durumunu gözle. 11. dakikada deney devam ederken bir kez yazıp ilk tuşun gecikmesini/kaybolmasını değerlendir; o andan sonraki zamanlayıcı davranışı bu ölçüme dahil değildir.
+- 12. dakikada otomatik bitişi, rapordaki successfulReads sayısını ve fiziksel gözlemi ayrı değerlendir. Başarılı GATT okumaları HID uykusunu veya LED kontrolünü kanıtlamaz.
+- Başka uygulamaya geç, ekranı kapat/aç ve döndür; aynı deney sürmeli, yeni oturum başlamamalı.
+- Uygulamadan veya bildirimden Durdur → yeni okuma gönderilmemeli; kısmi uyanıklık kilidi ve GATT istemcisi bırakılmalı.
+- Klavyeyi kapat veya Bluetooth iznini kaldır → bağlantı/okuma hatasıyla durmalı, yeniden bağlanma döngüsü başlamamalı.
+- Üretici bilgisi alanı olmayan BLE cihazda deney uygulanamadı demeli; farklı karakteristiklere komut göndermemeli.
+- Bildirim izni reddinde çökme olmamalı; uygulamadaki durdurma düğmesi çalışmalı.
+- İşlem Android tarafından sonlandırıldıktan sonra yeniden aç → eski running kaydı INTERRUPTED olarak gösterilmeli; deney kendiliğinden yeniden başlamamalı.
+- JSON'da characteristicWritesSent 0, sleepSettingChanged false, sleepPrevented ve backlightStayedOn null kalmalı.
+- Deney sırasında yazı/touchpad işlevlerinin korunması ayrıca doğrulanmalı. Firmware'in hareketsizlik zamanlayıcısı BLE okumalarından etkilenmiyorsa bu yöntem çözüm değildir.
+
+## Donanım analizi
+
 - İzin reddi → boş liste ve açıklama; tekrar izin ver → liste yenilenir.
 - Bluetooth kapalı → sistem ayarlarını aç; geri dönünce liste yenilenir.
 - Birden fazla eşleştirilmiş aygıtta doğru adresin seçildiğini doğrula.
@@ -26,3 +42,4 @@ Donanım değerlendirmesi: UUID ve WRITE bayrağı aydınlatma desteğini kanıt
 - 4 saniye zaman aşımında kalan GATT istekleri gönderilmemeli; bağlantı kapanmalı.
 - Analiz sırasında arka plana geçince meta veri kuyruğu ve zamanlayıcısı temizlenmeli.
 - writesSent sıfır kalmalı; notify/CCCD yazımı yapılmamalı.
+
